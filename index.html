@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafe Log</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js for Donut Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>Cafe Log</h1>
+            <p>カフェで一息つくような癒やしの時間</p>
+        </header>
+
+        <!-- Main Timer Area -->
+        <main class="timer-section">
+            <div class="timer-display" id="timer-display">00:00:00</div>
+            <div class="coffee-cup-container" id="coffee-cup-btn">
+                <div class="steam-container" id="steam-container">
+                    <!-- Steam elements will be injected by JS or shown via CSS -->
+                    <svg class="steam steam1" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 64C12 64 2 54 2 40C2 26 22 18 22 8C22 -2 12 -2 12 -2" stroke="#D7C4B7" stroke-width="4" stroke-linecap="round"/></svg>
+                    <svg class="steam steam2" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 64C12 64 22 54 22 40C22 26 2 18 2 8C2 -2 12 -2 12 -2" stroke="#D7C4B7" stroke-width="4" stroke-linecap="round"/></svg>
+                    <svg class="steam steam3" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 64C12 64 2 54 2 40C2 26 22 18 22 8C22 -2 12 -2 12 -2" stroke="#D7C4B7" stroke-width="4" stroke-linecap="round"/></svg>
+                </div>
+                <div class="cup-body">
+                    <div class="cup-handle"></div>
+                </div>
+                <div class="cup-saucer"></div>
+                <div class="timer-status" id="timer-status">Tap to Start</div>
+            </div>
+        </main>
+
+        <!-- Summary Area -->
+        <section class="summary-section">
+            <div class="period-tabs">
+                <button class="tab-btn active" data-period="daily">☕ 日次</button>
+                <button class="tab-btn" data-period="weekly">🫘 週次</button>
+                <button class="tab-btn" data-period="monthly">📖 月次</button>
+                <button class="tab-btn" data-period="yearly">🏠 年次</button>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-wrapper">
+                    <canvas id="summary-chart"></canvas>
+                    <div class="chart-center-icon">☕</div>
+                </div>
+            </div>
+
+            <!-- AI Barista Comment -->
+            <div class="ai-barista-card">
+                <div class="barista-icon">👨‍🍳</div>
+                <div class="barista-message" id="ai-message">
+                    こんにちは！今日も一日お疲れ様です。ゆっくり休んでくださいね。
+                </div>
+            </div>
+        </section>
+
+        <!-- Task Input Modal -->
+        <div class="modal-overlay" id="task-modal">
+            <div class="modal-content">
+                <h2>タスクを記録する</h2>
+                <div class="input-group">
+                    <label>タスク名</label>
+                    <div class="autocomplete-wrapper">
+                        <input type="text" id="task-name-input" placeholder="例: メールの返信" autocomplete="off">
+                        <ul class="autocomplete-list" id="autocomplete-list"></ul>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>カテゴリ</label>
+                    <div class="category-chips" id="category-chips">
+                        <!-- Chips will be injected by JS -->
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="cancel-task-btn">キャンセル</button>
+                    <button class="btn btn-primary" id="save-task-btn">保存する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

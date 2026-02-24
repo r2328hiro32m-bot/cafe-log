@@ -1,0 +1,472 @@
+/* Base Styles */
+:root {
+    /* Category Colors */
+    --color-work: #D32F2F; /* 仕事 / 深みのあるレッド */
+    --color-break: #388E3C; /* 休憩 / 落ち着いたフォレストグリーン */
+    --color-childcare: #E67E22; /* 育児 / 温かみのあるテラコッタ */
+    --color-hobby: #2980B9; /* 趣味 / 穏やかなネイビーブルー */
+    --color-chores: #F1C40F; /* 家事 / 柔らかなマスタード */
+
+    /* Theme Colors */
+    --bg-color: #FAF6F0; /* 温かみのあるクリーム色 */
+    --surface-color: #FFFFFF;
+    --text-primary: #4A3C31; /* コーヒーブラウン */
+    --text-secondary: #8B7355;
+    --border-color: #E6D5C3;
+    --accent-color: #8B5A2B;
+    
+    /* UI properties */
+    --border-radius-lg: 24px;
+    --border-radius-md: 16px;
+    --border-radius-sm: 8px;
+    --shadow-soft: 0 8px 24px rgba(139, 90, 43, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background-color: var(--bg-color);
+    padding: 24px 20px;
+    position: relative;
+    box-shadow: 0 0 32px rgba(0,0,0,0.03);
+}
+
+/* Header */
+.app-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.app-header h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    letter-spacing: 1px;
+}
+
+.app-header p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Timer Section */
+.timer-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.timer-display {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Coffee Cup Button */
+.coffee-cup-container {
+    position: relative;
+    width: 200px;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.coffee-cup-container:active {
+    transform: scale(0.95);
+}
+
+.cup-body {
+    width: 140px;
+    height: 110px;
+    background: linear-gradient(145deg, #ffffff, #f0e6dc);
+    border-radius: 8px 8px 48px 48px;
+    position: relative;
+    border: 3px solid var(--border-color);
+    box-shadow: 10px 10px 20px rgba(139, 90, 43, 0.1),
+               -5px -5px 15px rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+/* Internal coffee liquid effect could be added here */
+.cup-body::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    right: 8px;
+    height: 12px;
+    background-color: #8B5A2B;
+    border-radius: 50%;
+    opacity: 0.9;
+}
+
+.cup-handle {
+    position: absolute;
+    right: -30px;
+    top: 20px;
+    width: 35px;
+    height: 55px;
+    border: 8px solid #ffffff;
+    border-left: none;
+    border-radius: 0 24px 36px 0;
+    box-shadow: 5px 5px 10px rgba(139, 90, 43, 0.1);
+    z-index: 1;
+}
+
+.cup-saucer {
+    width: 170px;
+    height: 24px;
+    background: #ffffff;
+    border-radius: 50%;
+    margin-top: -12px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 10px 15px rgba(139, 90, 43, 0.15);
+    z-index: 1;
+}
+
+.timer-status {
+    margin-top: 16px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--accent-color);
+    text-align: center;
+    background: rgba(255,255,255,0.7);
+    padding: 4px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+}
+
+/* Steam Animation */
+.steam-container {
+    position: absolute;
+    top: -60px;
+    width: 100px;
+    height: 80px;
+    display: flex;
+    justify-content: space-around;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 0;
+}
+
+.coffee-cup-container.is-running .steam-container {
+    opacity: 1;
+}
+
+.steam {
+    width: 24px;
+    height: 64px;
+}
+
+.steam1 { animation: steam-rise 3s infinite ease-in-out; }
+.steam2 { animation: steam-rise 3.2s infinite ease-in-out 0.5s; }
+.steam3 { animation: steam-rise 2.8s infinite ease-in-out 1s; }
+
+@keyframes steam-rise {
+    0% { transform: translateY(10px) scaleX(1); opacity: 0; }
+    20% { opacity: 0.8; }
+    50% { transform: translateY(-15px) scaleX(1.1); }
+    100% { transform: translateY(-40px) scaleX(1.3); opacity: 0; }
+}
+
+/* Summary Section */
+.summary-section {
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+}
+
+.period-tabs {
+    display: flex;
+    background: var(--bg-color);
+    border-radius: var(--border-radius-md);
+    padding: 4px;
+    margin-bottom: 24px;
+}
+
+.tab-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 4px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: var(--surface-color);
+    color: var(--accent-color);
+    box-shadow: 0 4px 8px rgba(139, 90, 43, 0.05);
+}
+
+/* Chart */
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    aspect-ratio: 1;
+}
+
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.chart-center-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    opacity: 0.2;
+    z-index: 0;
+}
+
+/* AI Barista */
+.ai-barista-card {
+    margin-top: 24px;
+    background: #FDF9F3;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.barista-icon {
+    font-size: 2rem;
+    background: #ffffff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(139, 90, 43, 0.05);
+    flex-shrink: 0;
+}
+
+.barista-message {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+    padding-top: 4px;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(74, 60, 49, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: var(--surface-color);
+    width: 90%;
+    max-width: 400px;
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: 0 24px 48px rgba(74, 60, 49, 0.2);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-content h2 {
+    font-size: 1.25rem;
+    margin-bottom: 24px;
+    color: var(--accent-color);
+    text-align: center;
+}
+
+.input-group {
+    margin-bottom: 24px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+
+.autocomplete-wrapper {
+    position: relative;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+    background: #FAF6F0;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: #ffffff;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 10;
+    list-style: none;
+    display: none;
+}
+
+.autocomplete-list.active {
+    display: block;
+}
+
+.autocomplete-list li {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.autocomplete-list li:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-list li:hover {
+    background-color: var(--bg-color);
+}
+
+.category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.chip:hover {
+    opacity: 0.8;
+}
+
+.chip.active {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background: #dcd0c4;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(139, 90, 43, 0.2);
+}
+
+.btn-primary:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 6px rgba(139, 90, 43, 0.2);
+}
