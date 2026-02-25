@@ -372,6 +372,7 @@ function updateSummary() {
         chartCarousel.style.overflowX = 'hidden';
 
         const filteredLogs = filterLogsByPeriod(logs, currentPeriod);
+        currentViewLogs = filteredLogs; // Store for details view
         const { categoryTotals, totalAllSec } = calculateCategoryTotals(filteredLogs);
 
         let label = '';
@@ -411,7 +412,8 @@ function renderDailyCarousel(logs) {
             dateLabel,
             categoryTotals,
             totalAllSec,
-            isToday
+            isToday,
+            logs: filteredLogs // Store logs for this specific day
         });
     }
 
@@ -423,6 +425,8 @@ function renderDailyCarousel(logs) {
         // Store data in slide for intersection observer
         slide.categoryTotals = data.categoryTotals;
         slide.totalAllSec = data.totalAllSec;
+        slide.logs = data.logs; // Store logs for this specific day
+        slide.dateLabel = data.dateLabel;
     });
 
     // Scroll to the end (today)
@@ -430,6 +434,8 @@ function renderDailyCarousel(logs) {
         chartCarousel.scrollLeft = chartCarousel.scrollWidth;
         // manually update AI for today initially
         const todayData = daysData[daysData.length - 1];
+        currentViewLogs = todayData.logs;
+        logDetailsTitle.textContent = `📜 ${todayData.dateLabel}の記録`;
         updateAIBarista(todayData.categoryTotals, todayData.totalAllSec);
     }, 100);
 
@@ -497,6 +503,8 @@ function setupIntersectionObserver() {
             if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
                 // This slide is currently in view
                 const slide = entry.target;
+                currentViewLogs = slide.logs; // Update to use slide.logs
+                logDetailsTitle.textContent = `📜 ${slide.dateLabel}の記録`;
                 updateAIBarista(slide.categoryTotals, slide.totalAllSec);
             }
         });
@@ -737,7 +745,18 @@ function showSnackbar(message) {
     }, 3000);
 }
 
-// Google API Initialization
+// Storage for currently viewed logs (for details view)
+let currentViewLogs = [];
+
+// Log Details Modal Elements
+const viewDetailsBtn = document.getElementById('view-details-btn');
+const logDetailsModal = document.getElementById('log-details-modal');
+const closeDetailsBtn = document.getElementById('close-details-btn');
+const logDetailsList = document.getElementById('log-details-list');
+const logDetailsEmpty = document.getElementById('log-details-empty');
+const logDetailsTitle = document.getElementById('log-details-title');
+
+// Initialize Google APIs on Loadlization
 function gapiLoaded() {
     gapi.load('client', initializeGapiClient);
 }
@@ -913,6 +932,68 @@ backyardBtn.addEventListener('click', () => {
 closeBackyardBtn.addEventListener('click', () => {
     backyardModal.classList.remove('active');
 });
+
+// --- Log Details Modal Logic ---
+viewDetailsBtn.addEventListener('click', () => {
+    populateLogDetails();
+    logDetailsModal.classList.add('active');
+});
+
+closeDetailsBtn.addEventListener('click', () => {
+    logDetailsModal.classList.remove('active');
+});
+
+function populateLogDetails() {
+    logDetailsList.innerHTML = '';
+
+    if (!currentViewLogs || currentViewLogs.length === 0) {
+        logDetailsEmpty.style.display = 'block';
+        return;
+    }
+
+    logDetailsEmpty.style.display = 'none';
+
+    // Sort logs chronologically (oldest to newest)
+    const sortedLogs = [...currentViewLogs].sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    const categories = db.getCategories();
+
+    sortedLogs.forEach(log => {
+        const category = categories.find(c => c.id === log.category_id);
+        if (!category) return;
+
+        const startTime = new Date(log.start_time);
+        const endTime = new Date(log.end_time);
+
+        const timeFormatter = new Intl.DateTimeFormat('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        const timeStr = `${timeFormatter.format(startTime)} - ${timeFormatter.format(endTime)}`;
+
+        const durationMin = Math.round(log.duration_sec / 60);
+        let durationStr = '';
+        if (durationMin >= 60) {
+            const h = Math.floor(durationMin / 60);
+            const m = durationMin % 60;
+            durationStr = `${h}h${m > 0 ? m + 'm' : ''}`;
+        } else {
+            durationStr = `${durationMin}m`;
+        }
+
+        const li = document.createElement('li');
+        li.className = 'log-detail-item';
+
+        li.innerHTML = `
+            <div class="log-time-block">
+                <span>${timeStr}</span>
+                <span class="duration">${durationStr}</span>
+            </div>
+            <div class="log-info-block">
+                <div class="log-category-dot" style="background-color: ${category.color}"></div>
+                <div class="log-category-name">${category.name}</div>
+            </div>
+        `;
+
+        logDetailsList.appendChild(li);
+    });
+}
 
 // Initial Render
 document.addEventListener('DOMContentLoaded', () => {
