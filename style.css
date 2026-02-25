@@ -411,20 +411,7 @@ body {
     box-shadow: 0 4px 8px rgba(139, 90, 43, 0.05);
 }
 
-/* Chart */
-.chart-container {
-    position: relative;
-    width: 100%;
-    max-width: 280px;
-    margin: 0 auto;
-    aspect-ratio: 1;
-}
-
-.chart-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
+/* Chart settings moved down */
 
 .chart-center-icon {
     position: absolute;
