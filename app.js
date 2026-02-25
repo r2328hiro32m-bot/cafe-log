@@ -986,8 +986,11 @@ function populateLogDetails() {
                 <span class="duration">${durationStr}</span>
             </div>
             <div class="log-info-block">
-                <div class="log-category-dot" style="background-color: ${category.color}"></div>
-                <div class="log-category-name">${category.name}</div>
+                <div class="log-category-header">
+                    <div class="log-category-dot" style="background-color: ${category.color}"></div>
+                    <div class="log-category-name">${category.name}</div>
+                </div>
+                ${log.task_name ? `<div class="log-task-name">${log.task_name}</div>` : ''}
             </div>
         `;
 

@@ -700,11 +700,13 @@ input[type="text"]:focus {
 .log-time-block {
     display: flex;
     flex-direction: column;
-    width: 65px;
+    width: 95px;
+    /* Increased from 65px */
     flex-shrink: 0;
     color: var(--text-secondary);
     font-size: 0.85rem;
     font-family: 'Outfit', sans-serif;
+    white-space: nowrap;
 }
 
 .log-time-block .duration {
@@ -717,9 +719,16 @@ input[type="text"]:focus {
 .log-info-block {
     flex: 1;
     display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding-left: 12px;
+}
+
+.log-category-header {
+    display: flex;
     align-items: center;
     gap: 12px;
-    padding-left: 12px;
 }
 
 .log-category-dot {
@@ -733,6 +742,13 @@ input[type="text"]:focus {
     font-weight: 700;
     color: var(--text-primary);
     font-size: 1rem;
+}
+
+.log-task-name {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-left: 24px;
+    /* Align with text (12px dot + 12px gap) */
 }
 
 /* Category Settings Styles */
