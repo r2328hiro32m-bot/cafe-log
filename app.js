@@ -900,12 +900,16 @@ async function handleRestore() {
 
         showLoading('豆を補充しています...');
 
-        const response = await gapi.client.drive.files.get({
-            fileId: fileId,
-            alt: 'media'
+        const token = gapi.client.getToken().access_token;
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+            headers: new Headers({ 'Authorization': 'Bearer ' + token })
         });
 
-        const data = response.result;
+        if (!res.ok) {
+            throw new Error('Download failed');
+        }
+
+        const data = await res.json();
 
         if (data && (data.categories || data.logs)) {
             db.overwriteData(data);
