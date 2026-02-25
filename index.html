@@ -79,11 +79,17 @@
             </div>
 
             <!-- AI Barista Comment -->
-            <div class="ai-barista-card">
+            <div class="ai-barista-card" id="ai-barista-card">
                 <div class="barista-icon">👨‍🍳</div>
                 <div class="barista-message" id="ai-message">
-                    こんにちは！今日も一日お疲れ様です。ゆっくり休んでくださいね。
+                    <!-- Dynamic Message -->
                 </div>
+            </div>
+
+            <div class="details-action-container">
+                <button class="btn btn-secondary details-btn" id="view-details-btn">
+                    📜 詳細な記録を見る
+                </button>
             </div>
         </section>
 
@@ -167,11 +173,31 @@
             <p class="loading-text" id="loading-text">豆を準備しています...</p>
         </div>
 
-        <!-- Snackbar -->
-        <div id="snackbar" class="snackbar">完了しました。今日も良い一日を！</div>
+        <!-- Backyard Result Snackbar -->
+        <div id="snackbar" class="snackbar"></div>
 
-    </div>
-    <script src="app.js"></script>
+        <!-- Log Details Modal -->
+        <div class="modal-overlay" id="log-details-modal">
+            <div class="modal-content log-details-content">
+                <h2 id="log-details-title">📜 記録の詳細</h2>
+
+                <div class="receipt-container">
+                    <ul class="log-details-list" id="log-details-list">
+                        <!-- Details injected via JS -->
+                    </ul>
+                    <div id="log-details-empty"
+                        style="display: none; text-align: center; color: var(--text-secondary); padding: 20px;">
+                        この期間の記録はありません。
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="close-details-btn">閉じる</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
 </body>
 
 </html>

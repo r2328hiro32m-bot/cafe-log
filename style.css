@@ -455,6 +455,32 @@ body {
     padding-top: 4px;
 }
 
+/* Details Button */
+.details-action-container {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.details-btn {
+    font-size: 0.9rem;
+    padding: 10px 20px;
+    border-radius: 24px;
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: none;
+}
+
+.details-btn:hover {
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
 /* Modal */
 .modal-overlay {
     position: fixed;
@@ -633,6 +659,80 @@ input[type="text"]:focus {
 .btn-primary:active {
     transform: translateY(2px);
     box-shadow: 0 2px 6px rgba(139, 90, 43, 0.2);
+}
+
+/* Log Details Styles */
+.log-details-content {
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.receipt-container {
+    flex: 1;
+    overflow-y: auto;
+    background: #FAF6F0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: 16px;
+    margin-bottom: 24px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.log-details-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.log-detail-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.log-detail-item:last-child {
+    border-bottom: none;
+}
+
+.log-time-block {
+    display: flex;
+    flex-direction: column;
+    width: 65px;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-family: 'Outfit', sans-serif;
+}
+
+.log-time-block .duration {
+    font-weight: 700;
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.log-info-block {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 12px;
+}
+
+.log-category-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.log-category-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1rem;
 }
 
 /* Category Settings Styles */
