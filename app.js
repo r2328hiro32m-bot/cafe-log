@@ -43,6 +43,10 @@ class DBService {
         return JSON.parse(localStorage.getItem('cafe_categories') || '[]');
     }
 
+    saveCategories(categories) {
+        localStorage.setItem('cafe_categories', JSON.stringify(categories));
+    }
+
     getLogs() {
         return JSON.parse(localStorage.getItem('cafe_logs') || '[]');
     }
@@ -71,6 +75,22 @@ class DBService {
         const names = logs.map(l => l.task_name).filter(n => n && n.trim() !== '');
         return [...new Set(names)];
     }
+
+    getCompleteData() {
+        return {
+            categories: this.getCategories(),
+            logs: this.getLogs()
+        };
+    }
+
+    overwriteData(data) {
+        if (data.categories) {
+            this.saveCategories(data.categories);
+        }
+        if (data.logs) {
+            localStorage.setItem('cafe_logs', JSON.stringify(data.logs));
+        }
+    }
 }
 
 const db = new DBService();
@@ -93,6 +113,36 @@ const taskNameInput = document.getElementById('task-name-input');
 const autocompleteList = document.getElementById('autocomplete-list');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const aiMessage = document.getElementById('ai-message');
+const summaryChartCanvas = document.getElementById('summary-chart');
+
+// Settings Elements
+const openCatEditBtn = document.getElementById('open-cat-edit-btn');
+const backToTaskBtn = document.getElementById('back-to-task-btn');
+const taskEntryView = document.getElementById('task-entry-view');
+const categoryEditView = document.getElementById('category-edit-view');
+const categoryEditList = document.getElementById('category-edit-list');
+const newCategoryNameInput = document.getElementById('new-category-name');
+const newCategoryColorInput = document.getElementById('new-category-color');
+const addCategoryBtn = document.getElementById('add-category-btn');
+
+// Backyard & Drive Elements
+const backyardBtn = document.getElementById('backyard-btn');
+const backyardModal = document.getElementById('backyard-modal');
+const closeBackyardBtn = document.getElementById('close-backyard-btn');
+const backupBtn = document.getElementById('backup-btn');
+const restoreBtn = document.getElementById('restore-btn');
+const loadingOverlay = document.getElementById('loading-overlay');
+const loadingText = document.getElementById('loading-text');
+const snackbar = document.getElementById('snackbar');
+
+// Google Drive Config
+const CLIENT_ID = '570189384830-umq1sust4jj1c4divbvkemm25f7i6ajm.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const BACKUP_FILE_NAME = 'CafeLog_Backup.json';
+
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
 
 // --- Timer Logic ---
 function formatTime(totalSeconds) {
@@ -167,6 +217,11 @@ function renderCategoryChips() {
 function openTaskModal() {
     renderCategoryChips();
     taskNameInput.value = '';
+
+    // Switch to default view
+    taskEntryView.style.display = 'block';
+    categoryEditView.style.display = 'none';
+
     taskModal.classList.add('active');
 }
 
@@ -404,7 +459,289 @@ function updateAIBarista(categoryTotals, totalAllSec) {
     aiMessage.textContent = message;
 }
 
+// --- Category Settings Logic ---
+function renderSettingsCategories() {
+    const categories = db.getCategories();
+    categoryEditList.innerHTML = '';
+
+    categories.forEach(cat => {
+        const item = document.createElement('div');
+        item.className = 'category-edit-item';
+
+        item.innerHTML = `
+            <div class="category-info">
+                <div class="color-dot" style="background-color: ${cat.color};"></div>
+                <span class="category-name-text">${cat.name}</span>
+            </div>
+            <button class="delete-btn" data-id="${cat.id}">✖</button>
+        `;
+
+        categoryEditList.appendChild(item);
+    });
+
+    // Attach delete events
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.getAttribute('data-id');
+            deleteCategory(id);
+        });
+    });
+}
+
+function deleteCategory(id) {
+    let categories = db.getCategories();
+
+    // Prevent deleting the last category
+    if (categories.length <= 1) {
+        alert('カテゴリは最低1つ必要です。');
+        return;
+    }
+
+    if (confirm('このカテゴリを削除しますか？\n（過去の記録の集計に影響する場合があります）')) {
+        categories = categories.filter(c => c.id !== id);
+        db.saveCategories(categories);
+        renderSettingsCategories();
+        updateSummary(); // Refresh summary if needed
+    }
+}
+
+function addCategory() {
+    const name = newCategoryNameInput.value.trim();
+    const color = newCategoryColorInput.value;
+
+    if (!name) {
+        alert('カテゴリ名を入力してください。');
+        return;
+    }
+
+    const categories = db.getCategories();
+    categories.push({
+        id: 'cat_' + Date.now(),
+        name: name,
+        color: color
+    });
+
+    db.saveCategories(categories);
+    renderSettingsCategories();
+    updateSummary();
+
+    newCategoryNameInput.value = '';
+
+    // Also re-render chips in case user added a category
+    renderCategoryChips();
+}
+
+openCatEditBtn.addEventListener('click', () => {
+    renderSettingsCategories();
+    taskEntryView.style.display = 'none';
+    categoryEditView.style.display = 'block';
+});
+
+backToTaskBtn.addEventListener('click', () => {
+    taskEntryView.style.display = 'block';
+    categoryEditView.style.display = 'none';
+});
+
+addCategoryBtn.addEventListener('click', addCategory);
+
+// --- Google Drive Logic ---
+function showLoading(text) {
+    loadingText.textContent = text;
+    loadingOverlay.classList.add('active');
+}
+
+function hideLoading() {
+    loadingOverlay.classList.remove('active');
+}
+
+function showSnackbar(message) {
+    snackbar.textContent = message;
+    snackbar.classList.add('show');
+    setTimeout(() => {
+        snackbar.classList.remove('show');
+    }, 3000);
+}
+
+// Google API Initialization
+function gapiLoaded() {
+    gapi.load('client', initializeGapiClient);
+}
+
+async function initializeGapiClient() {
+    await gapi.client.init({
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+    });
+    gapiInited = true;
+    enableDriveButtons();
+}
+
+function gisLoaded() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: '', // defined later per action
+    });
+    gisInited = true;
+    enableDriveButtons();
+}
+
+function enableDriveButtons() {
+    if (gapiInited && gisInited) {
+        backupBtn.disabled = false;
+        restoreBtn.disabled = false;
+    }
+}
+
+// Ensure scripts call loaded logic when ready
+window.addEventListener('load', () => {
+    if (window.gapi) gapiLoaded();
+    if (window.google) gisLoaded();
+});
+
+function getOAuthToken(callback) {
+    tokenClient.callback = async (resp) => {
+        if (resp.error !== undefined) {
+            throw (resp);
+        }
+        await callback();
+    };
+
+    if (gapi.client.getToken() === null) {
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+    } else {
+        tokenClient.requestAccessToken({ prompt: '' });
+    }
+}
+
+async function findBackupFileId() {
+    let response;
+    try {
+        response = await gapi.client.drive.files.list({
+            q: `name='${BACKUP_FILE_NAME}' and trashed=false`,
+            fields: 'files(id, name)',
+            spaces: 'drive',
+        });
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
+    const files = response.result.files;
+    if (files && files.length > 0) {
+        return files[0].id;
+    } else {
+        return null;
+    }
+}
+
+// Backup Operation
+backupBtn.addEventListener('click', () => {
+    getOAuthToken(handleBackup);
+});
+
+async function handleBackup() {
+    showLoading('豆を保存瓶に詰めています...');
+
+    try {
+        const fileId = await findBackupFileId();
+        const dataStr = JSON.stringify(db.getCompleteData(), null, 2);
+
+        const metadata = {
+            name: BACKUP_FILE_NAME,
+            mimeType: 'application/json'
+        };
+
+        const file = new Blob([dataStr], { type: 'application/json' });
+        const form = new FormData();
+
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', file);
+
+        let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        let method = 'POST';
+
+        if (fileId) {
+            // Update existing
+            url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
+            method = 'PATCH';
+        }
+
+        const fetchOptions = {
+            method: method,
+            headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+            body: form
+        };
+
+        const res = await fetch(url, fetchOptions);
+        if (!res.ok) {
+            throw new Error('Upload failed');
+        }
+
+        hideLoading();
+        showSnackbar('保存が完了しました。今日も良い一日を！');
+        backyardModal.classList.remove('active');
+
+    } catch (error) {
+        console.error(error);
+        hideLoading();
+        alert('バックアップに失敗しました。');
+    }
+}
+
+// Restore Operation
+restoreBtn.addEventListener('click', () => {
+    getOAuthToken(handleRestore);
+});
+
+async function handleRestore() {
+    showLoading('クラウドの棚から記録を探しています...');
+
+    try {
+        const fileId = await findBackupFileId();
+
+        if (!fileId) {
+            hideLoading();
+            alert('クラウドにバックアップデータが見つかりませんでした。');
+            return;
+        }
+
+        showLoading('豆を補充しています...');
+
+        const response = await gapi.client.drive.files.get({
+            fileId: fileId,
+            alt: 'media'
+        });
+
+        const data = response.result;
+
+        if (data && (data.categories || data.logs)) {
+            db.overwriteData(data);
+            updateSummary();
+            hideLoading();
+            showSnackbar('復元が完了しました。今日も良い一日を！');
+            backyardModal.classList.remove('active');
+        } else {
+            throw new Error('Invalid data format');
+        }
+
+    } catch (error) {
+        console.error(error);
+        hideLoading();
+        alert('復元に失敗しました。');
+    }
+}
+
+// Backyard UI toggles
+backyardBtn.addEventListener('click', () => {
+    backyardModal.classList.add('active');
+});
+
+closeBackyardBtn.addEventListener('click', () => {
+    backyardModal.classList.remove('active');
+});
+
 // Initial Render
 document.addEventListener('DOMContentLoaded', () => {
     updateSummary();
+    backupBtn.disabled = true;
+    restoreBtn.disabled = true;
 });

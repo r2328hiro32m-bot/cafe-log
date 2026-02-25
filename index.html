@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,16 +8,26 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&family=Outfit:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- Chart.js for Donut Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google API Client & Identity Services -->
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
-            <h1>Cafe Log</h1>
+            <div class="header-top">
+                <h1>Cafe Log</h1>
+                <button class="icon-btn" id="backyard-btn" title="Backyard (設定)">🚪</button>
+            </div>
             <p>カフェで一息つくような癒やしの時間</p>
         </header>
 
@@ -26,9 +37,18 @@
             <div class="coffee-cup-container" id="coffee-cup-btn">
                 <div class="steam-container" id="steam-container">
                     <!-- Steam elements will be injected by JS or shown via CSS -->
-                    <svg class="steam steam1" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 64C12 64 2 54 2 40C2 26 22 18 22 8C22 -2 12 -2 12 -2" stroke="#D7C4B7" stroke-width="4" stroke-linecap="round"/></svg>
-                    <svg class="steam steam2" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 64C12 64 22 54 22 40C22 26 2 18 2 8C2 -2 12 -2 12 -2" stroke="#D7C4B7" stroke-width="4" stroke-linecap="round"/></svg>
-                    <svg class="steam steam3" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 64C12 64 2 54 2 40C2 26 22 18 22 8C22 -2 12 -2 12 -2" stroke="#D7C4B7" stroke-width="4" stroke-linecap="round"/></svg>
+                    <svg class="steam steam1" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 64C12 64 2 54 2 40C2 26 22 18 22 8C22 -2 12 -2 12 -2" stroke="#D7C4B7"
+                            stroke-width="4" stroke-linecap="round" />
+                    </svg>
+                    <svg class="steam steam2" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 64C12 64 22 54 22 40C22 26 2 18 2 8C2 -2 12 -2 12 -2" stroke="#D7C4B7"
+                            stroke-width="4" stroke-linecap="round" />
+                    </svg>
+                    <svg class="steam steam3" viewBox="0 0 24 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 64C12 64 2 54 2 40C2 26 22 18 22 8C22 -2 12 -2 12 -2" stroke="#D7C4B7"
+                            stroke-width="4" stroke-linecap="round" />
+                    </svg>
                 </div>
                 <div class="cup-body">
                     <div class="cup-handle"></div>
@@ -46,7 +66,7 @@
                 <button class="tab-btn" data-period="monthly">📖 月次</button>
                 <button class="tab-btn" data-period="yearly">🏠 年次</button>
             </div>
-            
+
             <div class="chart-container">
                 <div class="chart-wrapper">
                     <canvas id="summary-chart"></canvas>
@@ -66,29 +86,88 @@
         <!-- Task Input Modal -->
         <div class="modal-overlay" id="task-modal">
             <div class="modal-content">
-                <h2>タスクを記録する</h2>
-                <div class="input-group">
-                    <label>タスク名</label>
-                    <div class="autocomplete-wrapper">
-                        <input type="text" id="task-name-input" placeholder="例: メールの返信" autocomplete="off">
-                        <ul class="autocomplete-list" id="autocomplete-list"></ul>
+                <!-- Data Entry View -->
+                <div id="task-entry-view">
+                    <h2 style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>タスクを記録する</span>
+                        <button class="icon-btn" id="open-cat-edit-btn"
+                            style="position: static; font-size: 1.2rem; padding: 4px;" title="カテゴリを編集">✏️</button>
+                    </h2>
+                    <div class="input-group">
+                        <label>タスク名</label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="task-name-input" placeholder="例: メールの返信" autocomplete="off">
+                            <ul class="autocomplete-list" id="autocomplete-list"></ul>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>カテゴリ</label>
-                    <div class="category-chips" id="category-chips">
-                        <!-- Chips will be injected by JS -->
+
+                    <div class="input-group">
+                        <label>カテゴリ</label>
+                        <div class="category-chips" id="category-chips">
+                            <!-- Chips will be injected by JS -->
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" id="cancel-task-btn">キャンセル</button>
+                        <button class="btn btn-primary" id="save-task-btn">保存する</button>
                     </div>
                 </div>
 
-                <div class="modal-actions">
-                    <button class="btn btn-secondary" id="cancel-task-btn">キャンセル</button>
-                    <button class="btn btn-primary" id="save-task-btn">保存する</button>
+                <!-- Category Edit View -->
+                <div id="category-edit-view" style="display: none;">
+                    <h2>カテゴリ編集</h2>
+
+                    <div class="category-list-container" id="category-edit-list">
+                        <!-- Category items will be injected here -->
+                    </div>
+
+                    <div class="add-category-form">
+                        <input type="text" id="new-category-name" placeholder="新しいカテゴリ名" maxlength="10">
+                        <input type="color" id="new-category-color" value="#8B5A2B">
+                        <button class="btn-icon" id="add-category-btn">＋</button>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top: 24px;">
+                        <button class="btn btn-primary" id="back-to-task-btn">戻る</button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Backyard (Settings & Drive) Modal -->
+        <div class="modal-overlay" id="backyard-modal">
+            <div class="modal-content settings-content">
+                <h2>Backyard</h2>
+                <p style="text-align: center; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 24px;">
+                    クラウドの棚（Google Drive）へデータを保管したり、取り出したりできます。</p>
+
+                <div class="drive-actions">
+                    <button class="btn btn-primary drive-btn" id="backup-btn">
+                        <span class="icon">☕</span> 記録をクラウドの棚に保存
+                    </button>
+                    <button class="btn btn-secondary drive-btn" id="restore-btn">
+                        <span class="icon">📦</span> クラウドの棚から記録を戻す
+                    </button>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 32px;">
+                    <button class="btn btn-secondary" id="close-backyard-btn">お店に戻る</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner"></div>
+            <p class="loading-text" id="loading-text">豆を準備しています...</p>
+        </div>
+
+        <!-- Snackbar -->
+        <div id="snackbar" class="snackbar">完了しました。今日も良い一日を！</div>
+
     </div>
     <script src="app.js"></script>
 </body>
+
 </html>
