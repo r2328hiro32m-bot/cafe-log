@@ -113,7 +113,8 @@ const taskNameInput = document.getElementById('task-name-input');
 const autocompleteList = document.getElementById('autocomplete-list');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const aiMessage = document.getElementById('ai-message');
-const summaryChartCanvas = document.getElementById('summary-chart');
+const chartCarousel = document.getElementById('chart-carousel');
+const swipeHint = document.getElementById('swipe-hint');
 
 // Settings Elements
 const openCatEditBtn = document.getElementById('open-cat-edit-btn');
@@ -285,7 +286,14 @@ document.addEventListener('click', (e) => {
 
 // --- Summary & Chart Logic ---
 let currentPeriod = 'daily';
-let summaryChart = null;
+let summaryCharts = []; // Array to hold multiple chart instances
+
+function filterLogsByDateRange(logs, startDate, endDate) {
+    return logs.filter(log => {
+        const logDate = new Date(log.end_time);
+        return logDate >= startDate && logDate <= endDate;
+    });
+}
 
 function filterLogsByPeriod(logs, period) {
     const now = new Date();
@@ -309,10 +317,7 @@ function filterLogsByPeriod(logs, period) {
     });
 }
 
-function updateSummary() {
-    const logs = db.getLogs();
-    const filteredLogs = filterLogsByPeriod(logs, currentPeriod);
-
+function calculateCategoryTotals(filteredLogs) {
     const categoryTotals = {};
     const categories = db.getCategories();
     categories.forEach(c => categoryTotals[c.id] = { name: c.name, color: c.color, totalSec: 0 });
@@ -325,13 +330,140 @@ function updateSummary() {
         }
     });
 
-    updateChart(categoryTotals, totalAllSec);
-    updateAIBarista(categoryTotals, totalAllSec);
+    return { categoryTotals, totalAllSec };
 }
 
-function updateChart(categoryTotals, totalAllSec) {
-    const ctx = document.getElementById('summary-chart').getContext('2d');
+function updateSummary() {
+    const logs = db.getLogs();
 
+    // Destroy existing charts
+    summaryCharts.forEach(chart => chart.destroy());
+    summaryCharts = [];
+    chartCarousel.innerHTML = '';
+
+    if (currentPeriod === 'daily') {
+        swipeHint.style.display = 'block';
+        renderDailyCarousel(logs);
+    } else {
+        swipeHint.style.display = 'none';
+        const filteredLogs = filterLogsByPeriod(logs, currentPeriod);
+        const { categoryTotals, totalAllSec } = calculateCategoryTotals(filteredLogs);
+
+        let label = '';
+        if (currentPeriod === 'weekly') label = '過去7日間';
+        if (currentPeriod === 'monthly') label = '今月';
+        if (currentPeriod === 'yearly') label = '今年';
+
+        createChartSlide(label, categoryTotals, totalAllSec, true);
+        updateAIBarista(categoryTotals, totalAllSec);
+    }
+}
+
+function renderDailyCarousel(logs) {
+    const today = new Date();
+
+    // Generate data for the past 7 days (including today)
+    // We want the oldest day first so we can scroll to the newest (today) at the end
+    const daysData = [];
+    for (let i = 6; i >= 0; i--) {
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() - i);
+
+        const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);
+        endOfDay.setMilliseconds(endOfDay.getMilliseconds() - 1);
+
+        const filteredLogs = filterLogsByDateRange(logs, startOfDay, endOfDay);
+        const { categoryTotals, totalAllSec } = calculateCategoryTotals(filteredLogs);
+
+        const isToday = i === 0;
+        let dateLabel = `${targetDate.getMonth() + 1}月${targetDate.getDate()}日`;
+        if (isToday) dateLabel = '今日';
+        else if (i === 1) dateLabel = '昨日';
+
+        daysData.push({
+            dateLabel,
+            categoryTotals,
+            totalAllSec,
+            isToday
+        });
+    }
+
+    // Create slides
+    daysData.forEach((data, index) => {
+        const slide = createChartSlide(data.dateLabel, data.categoryTotals, data.totalAllSec, false);
+        slide.dataset.index = index;
+
+        // Store data in slide for intersection observer
+        slide.categoryTotals = data.categoryTotals;
+        slide.totalAllSec = data.totalAllSec;
+    });
+
+    // Scroll to the end (today)
+    setTimeout(() => {
+        chartCarousel.scrollLeft = chartCarousel.scrollWidth;
+        // manually update AI for today initially
+        const todayData = daysData[daysData.length - 1];
+        updateAIBarista(todayData.categoryTotals, todayData.totalAllSec);
+    }, 100);
+
+    setupIntersectionObserver();
+}
+
+function createChartSlide(dateLabel, categoryTotals, totalAllSec, isSingle) {
+    const slide = document.createElement('div');
+    slide.className = 'chart-slide';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'chart-date-label';
+    labelEl.textContent = dateLabel;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chart-wrapper';
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const centerIcon = document.createElement('div');
+    centerIcon.className = 'chart-center-icon';
+    centerIcon.textContent = '☕';
+
+    wrapper.appendChild(canvas);
+    wrapper.appendChild(centerIcon);
+    slide.appendChild(labelEl);
+    slide.appendChild(wrapper);
+
+    chartCarousel.appendChild(slide);
+
+    renderChartInstance(ctx, categoryTotals, totalAllSec);
+    return slide;
+}
+
+let observer = null;
+function setupIntersectionObserver() {
+    if (observer) observer.disconnect();
+
+    const slides = document.querySelectorAll('.chart-slide');
+    if (slides.length === 0) return;
+
+    observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                // This slide is currently in view
+                const slide = entry.target;
+                updateAIBarista(slide.categoryTotals, slide.totalAllSec);
+            }
+        });
+    }, {
+        root: chartCarousel,
+        threshold: 0.6 // Trigger when 60% of the slide is visible
+    });
+
+    slides.forEach(slide => observer.observe(slide));
+}
+
+function renderChartInstance(ctx, categoryTotals, totalAllSec) {
     const labels = [];
     const data = [];
     const backgroundColor = [];
@@ -350,11 +482,7 @@ function updateChart(categoryTotals, totalAllSec) {
         backgroundColor.push('#E6D5C3');
     }
 
-    if (summaryChart) {
-        summaryChart.destroy();
-    }
-
-    summaryChart = new Chart(ctx, {
+    const chart = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: labels,
@@ -407,6 +535,8 @@ function updateChart(categoryTotals, totalAllSec) {
             }
         }
     });
+
+    summaryCharts.push(chart);
 }
 
 tabBtns.forEach(btn => {

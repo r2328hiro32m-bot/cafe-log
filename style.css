@@ -671,6 +671,78 @@ input[type="text"]:focus {
     border: 1px solid var(--border-color);
 }
 
+.chart-container {
+    background: #FFFFFF;
+    border-radius: var(--border-radius-md);
+    padding: 24px 16px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+}
+
+.swipe-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    animation: fadePulse 2s infinite;
+    display: none;
+    /* Shown via JS only on daily tab */
+}
+
+@keyframes fadePulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.chart-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    padding-bottom: 12px;
+    /* Prevent clipping */
+}
+
+.chart-carousel::-webkit-scrollbar {
+    display: none;
+    /* Safari and Chrome */
+}
+
+.chart-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chart-date-label {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    font-size: 1.1rem;
+}
+
+.chart-wrapper {
+    position: relative;
+    width: 250px;
+    height: 250px;
+}
+
 .category-info {
     display: flex;
     align-items: center;
