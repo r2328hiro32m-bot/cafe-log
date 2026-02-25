@@ -447,11 +447,16 @@ function setupCarouselButtons() {
     // Determine scroll amount based on client width of the container
     const scrollAmount = chartCarousel.clientWidth;
 
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+
+    if (!prevBtn || !nextBtn || !prevBtn.parentNode || !nextBtn.parentNode) return;
+
     // We must clone and replace to remove old listeners avoiding multiple bindings
-    const newPrevBtn = carouselPrevBtn.cloneNode(true);
-    const newNextBtn = carouselNextBtn.cloneNode(true);
-    carouselPrevBtn.parentNode.replaceChild(newPrevBtn, carouselPrevBtn);
-    carouselNextBtn.parentNode.replaceChild(newNextBtn, carouselNextBtn);
+    const newPrevBtn = prevBtn.cloneNode(true);
+    const newNextBtn = nextBtn.cloneNode(true);
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
 
     newPrevBtn.addEventListener('click', () => {
         chartCarousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
