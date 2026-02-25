@@ -115,6 +115,9 @@ const tabBtns = document.querySelectorAll('.tab-btn');
 const aiMessage = document.getElementById('ai-message');
 const chartCarousel = document.getElementById('chart-carousel');
 const swipeHint = document.getElementById('swipe-hint');
+const carouselNav = document.getElementById('carousel-nav');
+const carouselPrevBtn = document.getElementById('carousel-prev');
+const carouselNextBtn = document.getElementById('carousel-next');
 
 // Settings Elements
 const openCatEditBtn = document.getElementById('open-cat-edit-btn');
@@ -336,16 +339,38 @@ function calculateCategoryTotals(filteredLogs) {
 function updateSummary() {
     const logs = db.getLogs();
 
-    // Destroy existing charts
-    summaryCharts.forEach(chart => chart.destroy());
+    // Destroy existing charts safely
+    if (summaryCharts && summaryCharts.length > 0) {
+        summaryCharts.forEach(chart => {
+            if (chart) chart.destroy();
+        });
+    }
     summaryCharts = [];
     chartCarousel.innerHTML = '';
 
     if (currentPeriod === 'daily') {
         swipeHint.style.display = 'block';
+
+        // Show Carousel Nav buttons only if standard mouse/pointer device (rough check)
+        if (window.matchMedia("(pointer: fine)").matches) {
+            carouselNav.style.display = 'flex';
+        } else {
+            carouselNav.style.display = 'none';
+        }
+
+        // Important: Restore display format for carousel
+        chartCarousel.style.display = 'flex';
+        chartCarousel.style.overflowX = 'auto';
+
         renderDailyCarousel(logs);
     } else {
         swipeHint.style.display = 'none';
+        carouselNav.style.display = 'none';
+
+        // Disable scroll for single views so it centers properly
+        chartCarousel.style.display = 'block';
+        chartCarousel.style.overflowX = 'hidden';
+
         const filteredLogs = filterLogsByPeriod(logs, currentPeriod);
         const { categoryTotals, totalAllSec } = calculateCategoryTotals(filteredLogs);
 
@@ -409,6 +434,26 @@ function renderDailyCarousel(logs) {
     }, 100);
 
     setupIntersectionObserver();
+    setupCarouselButtons();
+}
+
+function setupCarouselButtons() {
+    // Determine scroll amount based on client width of the container
+    const scrollAmount = chartCarousel.clientWidth;
+
+    // We must clone and replace to remove old listeners avoiding multiple bindings
+    const newPrevBtn = carouselPrevBtn.cloneNode(true);
+    const newNextBtn = carouselNextBtn.cloneNode(true);
+    carouselPrevBtn.parentNode.replaceChild(newPrevBtn, carouselPrevBtn);
+    carouselNextBtn.parentNode.replaceChild(newNextBtn, carouselNextBtn);
+
+    newPrevBtn.addEventListener('click', () => {
+        chartCarousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+
+    newNextBtn.addEventListener('click', () => {
+        chartCarousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
 }
 
 function createChartSlide(dateLabel, categoryTotals, totalAllSec, isSingle) {
