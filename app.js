@@ -166,14 +166,19 @@ function updateTimer() {
 function startTracking() {
     isTracking = true;
     currentStartTime = new Date();
+    localStorage.setItem('cafe_timer_start', currentStartTime.toISOString());
+    console.log('[Timer] startTracking called. Saved:', currentStartTime.toISOString());
     coffeeCupBtn.classList.add('is-running');
     timerStatus.textContent = 'Tap to Stop';
+    if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(updateTimer, 1000);
 }
 
 function stopTracking() {
     isTracking = false;
     clearInterval(timerInterval);
+    localStorage.removeItem('cafe_timer_start');
+    console.log('[Timer] stopTracking called. Cleared timer.');
     coffeeCupBtn.classList.remove('is-running');
     timerStatus.textContent = 'Tap to Start';
     openTaskModal();
@@ -185,6 +190,29 @@ coffeeCupBtn.addEventListener('click', () => {
     } else {
         startTracking();
     }
+});
+
+function initTimerPersistence() {
+    const savedStart = localStorage.getItem('cafe_timer_start');
+    console.log('[Timer] initTimerPersistence. Saved value:', savedStart);
+    if (savedStart) {
+        isTracking = true;
+        currentStartTime = new Date(savedStart);
+        console.log('[Timer] Restored start time:', currentStartTime);
+        coffeeCupBtn.classList.add('is-running');
+        timerStatus.textContent = 'Tap to Stop';
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
+    } else {
+        console.log('[Timer] No saved timer found.');
+    }
+}
+
+// Make sure it runs after DOM is fully loaded just in case elements aren't ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Timer] DOMContentLoaded. Initializing persistence.');
+    initTimerPersistence();
 });
 
 // --- Modal & Category Logic ---
